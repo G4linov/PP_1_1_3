@@ -5,13 +5,21 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class Util {
-    public static Connection getConnection() throws SQLException {
-        String host = "localhost";
-        int port = 3306;
-        String user = "root";
-        String password = "Slatt4561";
-        String database = "pp113";
-        String url = "jdbc:mysql://" + host + ":" + port + "/" + database;
-        return DriverManager.getConnection(url, user, password);
+
+    private static Connection conn;
+
+    private static final String url = "jdbc:mysql://localhost:3306/pp113";
+    private static final String user = "root";
+    private static final String password = "Slatt4561";
+
+    public static Connection getConnection() {
+        try {
+            if (conn == null || conn.isClosed()) {
+                conn = DriverManager.getConnection(url, user, password);
+            }
+        } catch (SQLException e) {
+            System.err.println(e.getMessage());
+        }
+        return conn;
     }
 }

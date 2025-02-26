@@ -12,75 +12,83 @@ import java.util.List;
 
 public class UserDaoJDBCImpl implements UserDao {
 
+    private static final Connection conn = Util.getConnection();
+
+
     public UserDaoJDBCImpl() {
     }
 
     public void createUsersTable() {
-        try (Connection con = Util.getConnection()) {
-            con.setAutoCommit(false);
-            String sql = "CREATE TABLE IF NOT EXISTS users (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100) NOT NULL, " +
-                    "lastName VARCHAR(100) NOT NULL, age INT NOT NULL)";
-            con.createStatement().execute(sql);
-            con.commit();
+
+        String sql = "CREATE TABLE IF NOT EXISTS users (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100) NOT NULL, " +
+                "lastName VARCHAR(100) NOT NULL, age INT NOT NULL)";
+
+        try {
+            conn.createStatement().execute(sql);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
+
     }
 
     public void dropUsersTable() {
-        try (Connection con = Util.getConnection()) {
-            con.setAutoCommit(false);
-            String sql = "DROP TABLE IF EXISTS users";
-            con.createStatement().execute(sql);
-            con.commit();
+
+        String sql = "DROP TABLE IF EXISTS users";
+
+        try {
+            conn.createStatement().execute(sql);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
 
     public void saveUser(String name, String lastName, byte age) {
-        try (Connection con = Util.getConnection()) {
-            con.setAutoCommit(false);
-            String sql = "INSERT INTO users (name, lastName, age) VALUES (?, ?, ?)";
-            PreparedStatement ps = con.prepareStatement(sql);
-            ps.setString(1, name);
-            ps.setString(2, lastName);
-            ps.setInt(3, age);
-            ps.executeUpdate();
-            con.commit();
+
+        String sql = "INSERT INTO users (name, lastName, age) VALUES (?, ?, ?)";
+
+        try {
+            PreparedStatement preparedStatement = conn.prepareStatement(sql);
+            preparedStatement.setString(1, name);
+            preparedStatement.setString(2, lastName);
+            preparedStatement.setByte(3, age);
+            preparedStatement.execute();
+
+            System.out.println("User с именем — " + name + " добавлен в базу данных");
+
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
 
     public void removeUserById(long id) {
-        try (Connection con = Util.getConnection()) {
-            con.setAutoCommit(false);
-            String sql = "DELETE FROM users WHERE id = ?";
-            PreparedStatement ps = con.prepareStatement(sql);
-            ps.setLong(1, id);
-            ps.executeUpdate();
-            con.commit();
+
+        String sql = "DELETE FROM users WHERE id = ?";
+
+        try {
+            PreparedStatement pstm = conn.prepareStatement(sql);
+            pstm.setLong(1, id);
+            pstm.execute();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
 
     public List<User> getAllUsers() {
+
+        String sql = "SELECT * FROM users";
         List<User> users = new ArrayList<>();
-        try (Connection con = Util.getConnection()) {
-            con.setAutoCommit(false);
-            String sql = "SELECT * FROM users";
-            PreparedStatement ps = con.prepareStatement(sql);
-            ResultSet rs = ps.executeQuery();
+
+        try {
+            ResultSet rs = conn.createStatement().executeQuery(sql);
+
             while (rs.next()) {
-                String name = rs.getString("name");
-                String lastName = rs.getString("lastName");
-                byte age = rs.getByte("age");
-                User user = new User(name, lastName, age);
+                User user = new User();
+                user.setId(rs.getLong("id"));
+                user.setName(rs.getString("name"));
+                user.setLastName(rs.getString("lastName"));
+                user.setAge(rs.getByte("age"));
                 users.add(user);
             }
-            con.commit();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -88,11 +96,11 @@ public class UserDaoJDBCImpl implements UserDao {
     }
 
     public void cleanUsersTable() {
-        try (Connection con = Util.getConnection()) {
-            con.setAutoCommit(false);
-            String sql = "DELETE FROM users";
-            con.createStatement().execute(sql);
-            con.commit();
+
+        String sql = "DELETE FROM users";
+
+        try {
+            conn.createStatement().execute(sql);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
