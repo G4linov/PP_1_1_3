@@ -27,6 +27,7 @@ public class UserDaoHibernateImpl implements UserDao {
 
         Session session = sessionFactory.openSession();
         Transaction transaction = session.beginTransaction();
+
         try {
             session.createSQLQuery(sql).executeUpdate();
             transaction.commit();
@@ -100,12 +101,20 @@ public class UserDaoHibernateImpl implements UserDao {
 
     @Override
     public List<User> getAllUsers() {
+        Session session = sessionFactory.openSession();
+        Transaction transaction = session.beginTransaction();
 
-        try (Session session = sessionFactory.openSession()) {
+        try {
             List<User> users = session.createQuery("from User").getResultList();
+            transaction.commit();
             return users;
         } catch (Exception e) {
+            if (transaction != null) {
+                transaction.rollback();
+            }
             throw new RuntimeException(e);
+        } finally {
+            session.close();
         }
     }
 
